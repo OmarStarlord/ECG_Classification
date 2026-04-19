@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+    <head>
+        <title>ECG200 Classifier</title>
+        <meta charset="UTF-8" />
+    </head>
+    <body>
+        <h1>ECG200 - Classification</h1>
+
+        <h2>1. Choisir le modèle</h2>
+        <form method="post" action="./config" enctype="application/x-www-form-urlencoded">
+            <select name="algo">
+                <option value="mlp">MLP</option>
+                <option value="cnn">CNN</option>
+                <option value="rnn">RNN</option>
+            </select>
+            <input type="submit" value="Configurer">
+        </form>
+
+        <h2>2. Classifier un fichier TSV</h2>
+        <form method="post" action="./classify" enctype="multipart/form-data">
+            <input type="file" name="datafile" accept=".tsv">
+            <input type="submit" value="Classifier">
+        </form>
+    </body>
+</html>
