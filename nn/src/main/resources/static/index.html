@@ -3,6 +3,23 @@
     <head>
         <title>ECG200 Classifier</title>
         <meta charset="UTF-8" />
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #f5f5f5; }
+            h1 { color: #333; }
+            h2 { color: #555; margin-top: 30px; }
+            select, input[type="file"] { padding: 8px; margin-right: 10px; }
+            button, input[type="submit"] { padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+            button:hover, input[type="submit"]:hover { background: #0056b3; }
+            #results { margin-top: 30px; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 15px; }
+            .card { padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            .card.normal { background: #d4edda; color: #155724; }
+            .card.abnormal { background: #f8d7da; color: #721c24; }
+            .card .label { font-size: 11px; font-weight: normal; margin-bottom: 4px; color: inherit; opacity: 0.8; }
+            .card .value { font-size: 18px; }
+            .summary { margin-top: 15px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            .error { color: red; margin-top: 10px; }
+        </style>
     </head>
     <body>
         <h1>ECG200 - Classification</h1>
@@ -18,9 +35,65 @@
         </form>
 
         <h2>2. Classifier un fichier TSV</h2>
-        <form method="post" action="./classify" enctype="multipart/form-data">
-            <input type="file" name="datafile" accept=".tsv">
-            <input type="submit" value="Classifier">
+        <form id="classifyForm">
+            <input type="file" name="datafile" id="datafile" accept=".tsv">
+            <button type="submit">Classifier</button>
         </form>
+
+        <div id="results"></div>
+
+        <script>
+            document.getElementById('classifyForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const file = document.getElementById('datafile').files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('datafile', file);
+
+                document.getElementById('results').innerHTML = '<p>Classification en cours...</p>';
+
+                try {
+                    const response = await fetch('./classify', { method: 'POST', body: formData });
+                    const json = await response.json();
+
+                    if (json.status !== 'ok') {
+                        document.getElementById('results').innerHTML = `<p class="error">Erreur: ${json.data}</p>`;
+                        return;
+                    }
+
+                    const data = json.data;
+                    const keys = Object.keys(data);
+                    const normal = keys.filter(k => data[k] === 1).length;
+                    const abnormal = keys.filter(k => data[k] === -1).length;
+
+                    let html = `
+                        <div class="summary">
+                            <strong>Total:</strong> ${keys.length} &nbsp;|&nbsp;
+                            <span style="color:#155724">&#9646; Normal (1): ${normal}</span> &nbsp;|&nbsp;
+                            <span style="color:#721c24">&#9646; Anormal (-1): ${abnormal}</span>
+                        </div>
+                        <div class="grid">
+                    `;
+
+                    for (const [key, value] of Object.entries(data)) {
+                        const cls = value === 1 ? 'normal' : 'abnormal';
+                        const label = value === 1 ? 'Normal' : 'Anormal';
+                        html += `
+                            <div class="card ${cls}">
+                                <div class="label">${key}</div>
+                                <div class="value">${label}</div>
+                            </div>
+                        `;
+                    }
+
+                    html += '</div>';
+                    document.getElementById('results').innerHTML = html;
+
+                } catch (err) {
+                    document.getElementById('results').innerHTML = `<p class="error">Erreur réseau: ${err.message}</p>`;
+                }
+            });
+        </script>
     </body>
 </html>

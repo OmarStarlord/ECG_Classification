@@ -1,10 +1,10 @@
 #!/bin/bash
 docker stop ia; docker rm ia
 ( cd ia; docker buildx build --rm -t ia . )
-docker stop nn; docker rm nn
-( cd nn; docker buildx build --rm -t nn . )
-echo "Beware if you try later with docker compose up"
-echo "Before export this variable using :"
-echo "export MODELS=\`cd ia/graph; pwd\`"
+if ! docker image inspect nn &>/dev/null; then
+  docker stop nn; docker rm nn
+  ( cd nn; docker buildx build --rm -t nn . )
+fi
 export MODELS=`cd ia/graph; pwd`
+echo "export MODELS=$MODELS" >> ~/.bashrc
 docker compose up
