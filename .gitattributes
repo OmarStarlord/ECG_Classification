@@ -1,0 +1,2 @@
+# Shell scripts = always use LF line endings
+go eol=lf
